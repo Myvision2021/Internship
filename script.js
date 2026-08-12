@@ -1,0 +1,455 @@
+// ========================================
+//   IKON COMPUTER EDUCATION - Main Script
+// ========================================
+
+// ===== LIGHTBOX (Brochure image zoom) =====
+function openLightbox() {
+  const lb = document.getElementById('lightbox');
+  if (lb) {
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function closeLightbox() {
+  const lb = document.getElementById('lightbox');
+  if (lb) {
+    lb.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+}
+
+// Close lightbox with Escape key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeLightbox();
+});
+
+// ===== PAYMENT SECTION =====
+
+// Switch between UPI and NEFT tabs
+function switchPayTab(tab) {
+  document.querySelectorAll('.pay-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.pay-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('ptab-'   + tab).classList.add('active');
+  document.getElementById('ppanel-' + tab).classList.add('active');
+}
+
+// Copy UPI ID to clipboard
+function copyUPI() {
+  const id  = document.getElementById('upi-id-text').textContent.trim();
+  const btn = document.getElementById('copy-upi-btn');
+  const lbl = document.getElementById('copy-label');
+
+  navigator.clipboard.writeText(id).then(() => {
+    lbl.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      lbl.textContent = 'Copy';
+      btn.classList.remove('copied');
+    }, 2500);
+  }).catch(() => {
+    // Fallback for browsers without clipboard API
+    const ta = document.createElement('textarea');
+    ta.value = id;
+    ta.style.position = 'fixed';
+    ta.style.opacity  = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    lbl.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      lbl.textContent = 'Copy';
+      btn.classList.remove('copied');
+    }, 2500);
+  });
+}
+
+// Copy any text (used for NEFT bank details click-to-copy)
+function copyText(text, el) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = el.innerHTML;
+    el.innerHTML = '&#10003; Copied!';
+    el.style.color = 'var(--accent-green)';
+    setTimeout(() => {
+      el.innerHTML = orig;
+      el.style.color = '';
+    }, 2000);
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  });
+}
+
+// ===== NAVBAR SCROLL EFFECT =====
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', () => {
+  if (window.scrollY > 20) {
+    navbar.classList.add('scrolled');
+  } else {
+    navbar.classList.remove('scrolled');
+  }
+});
+
+// ===== HAMBURGER MENU =====
+const hamburger = document.getElementById('hamburger');
+const navLinks = document.getElementById('nav-links');
+
+hamburger.addEventListener('click', () => {
+  navLinks.classList.toggle('open');
+  const spans = hamburger.querySelectorAll('span');
+  if (navLinks.classList.contains('open')) {
+    spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
+    spans[1].style.opacity = '0';
+    spans[2].style.transform = 'rotate(-45deg) translate(5px, -5px)';
+  } else {
+    spans.forEach(s => {
+      s.style.transform = '';
+      s.style.opacity = '';
+    });
+  }
+});
+
+// Close nav on link click (mobile)
+navLinks.querySelectorAll('a').forEach(link => {
+  link.addEventListener('click', () => {
+    navLinks.classList.remove('open');
+    hamburger.querySelectorAll('span').forEach(s => {
+      s.style.transform = '';
+      s.style.opacity = '';
+    });
+  });
+});
+
+// ===== FAQ ACCORDION =====
+function toggleFaq(btn) {
+  const item = btn.closest('.faq-item');
+  const isOpen = item.classList.contains('open');
+
+  // Close all
+  document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+
+  // Open clicked (if it wasn't open)
+  if (!isOpen) {
+    item.classList.add('open');
+  }
+}
+
+// ===== REGISTRATION ENDPOINT =====
+// Points to the local Python server's /register route.
+// Data is saved to registrations.json + registrations.csv
+// View all entries at: http://localhost:3000/admin  (password: ikon2026)
+const GOOGLE_SCRIPT_URL = '/register';
+
+// ===== FORM SUBMISSION → GOOGLE DRIVE / SHEETS =====
+async function handleSubmit(event) {
+  event.preventDefault();
+
+  const btn = document.getElementById('form-submit');
+  btn.textContent = 'Submitting…';
+  btn.disabled = true;
+
+  // Collect form values
+  const payload = {
+    timestamp:  new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+    name:       document.getElementById('input-name').value.trim(),
+    email:      document.getElementById('input-email').value.trim(),
+    phone:      document.getElementById('input-phone').value.trim(),
+    course:     document.getElementById('input-course').value,
+    mode:       document.getElementById('input-mode').value,
+    message:    document.getElementById('input-message').value.trim(),
+  };
+
+  // ── If URL not yet configured, show setup instructions ──
+  if (GOOGLE_SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+    console.warn('⚠️  Google Apps Script URL not set. See google_apps_script.js for setup.');
+    simulateSuccess(btn, payload);
+    return;
+  }
+
+  try {
+    // POST registration to the Python server
+    const res = await fetch(GOOGLE_SCRIPT_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(payload),
+    });
+
+    // Safely parse JSON — server might return HTML on unexpected errors
+    let result;
+    try {
+      result = await res.json();
+    } catch (_) {
+      result = { status: 'error', message: 'Unexpected server response (HTTP ' + res.status + ').' };
+    }
+
+    if (result.status === 'success') {
+      showSuccess(btn, payload);
+    } else {
+      showFormError(btn, result.message || 'Registration failed. Please try again.');
+    }
+  } catch (err) {
+    // Network error (server not running, no internet, etc.)
+    console.error('Registration fetch error:', err);
+    showFormError(btn,
+      err.message && err.message.includes('fetch')
+        ? 'Server is not reachable. Make sure the server is running (python server.py) and try again.'
+        : err.message || 'Could not connect. Please try again.'
+    );
+  }
+}
+
+// After successful registration → redirect to login page with email pre-filled
+function showSuccess(btn, payload) {
+  btn.textContent = 'Submit Application →';
+  btn.disabled = false;
+  document.getElementById('register-form').reset();
+
+  // Build login URL with pre-filled email & name so the student can log in immediately
+  const loginUrl = '/login.html'
+    + '?email=' + encodeURIComponent(payload.email)
+    + '&name='  + encodeURIComponent(payload.name);
+
+  // Brief confirmation before redirect
+  const formSection = document.getElementById('register');
+  if (formSection) {
+    const msg = document.createElement('div');
+    msg.style.cssText = [
+      'position:fixed', 'top:50%', 'left:50%',
+      'transform:translate(-50%,-50%)',
+      'background:white', 'border-radius:20px',
+      'padding:36px 40px', 'text-align:center',
+      'box-shadow:0 20px 60px rgba(0,0,0,.2)',
+      'z-index:9999', 'max-width:380px', 'width:90%',
+      'animation:fadeInScale .3s ease'
+    ].join(';');
+    msg.innerHTML = [
+      '<div style="font-size:52px;margin-bottom:12px">&#127881;</div>',
+      '<h3 style="font-family:Outfit,sans-serif;font-size:22px;font-weight:800;margin-bottom:8px">',
+        'Registration Successful!',
+      '</h3>',
+      '<p style="font-size:14px;color:#6b7280;line-height:1.6;margin-bottom:20px">',
+        'Welcome, <strong>' + payload.name + '</strong>! Taking you to your student portal…',
+      '</p>',
+      '<div style="width:40px;height:4px;background:linear-gradient(90deg,#1a73e8,#FF6B35);',
+        'border-radius:2px;margin:0 auto;animation:grow 1.5s ease forwards"></div>'
+    ].join('');
+
+    // Overlay
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);z-index:9998';
+    document.body.appendChild(overlay);
+    document.body.appendChild(msg);
+  }
+
+  setTimeout(() => { window.location.href = loginUrl; }, 2000);
+}
+
+// Show inline error under the submit button (no alert() popup)
+function showFormError(btn, message) {
+  btn.textContent = 'Submit Application →';
+  btn.disabled = false;
+  let errEl = document.getElementById('form-submit-error');
+  if (!errEl) {
+    errEl = document.createElement('p');
+    errEl.id = 'form-submit-error';
+    errEl.style.cssText = [
+      'margin-top:10px', 'padding:10px 14px',
+      'background:#ffebee', 'border:1px solid #ef9a9a',
+      'border-radius:8px', 'color:#b71c1c',
+      'font-size:13px', 'line-height:1.5', 'text-align:center'
+    ].join(';');
+    btn.parentNode.insertBefore(errEl, btn.nextSibling);
+  }
+  errEl.textContent = message;
+  errEl.style.display = 'block';
+  setTimeout(() => { errEl.style.display = 'none'; }, 8000);
+}
+
+function closeModal() {
+  document.getElementById('success-modal').classList.remove('show');
+}
+
+// Close modal on overlay click
+document.getElementById('success-modal').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closeModal();
+});
+
+// Close modal on Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// ===== SCROLL ANIMATIONS (Intersection Observer) =====
+const fadeElements = document.querySelectorAll(
+  '.feature-card, .course-card, .testimonial-card, .process-step, .faq-item, .highlight-item'
+);
+
+fadeElements.forEach(el => el.classList.add('fade-in'));
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach((entry, index) => {
+    if (entry.isIntersecting) {
+      setTimeout(() => {
+        entry.target.classList.add('visible');
+      }, index * 80);
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.1 });
+
+fadeElements.forEach(el => observer.observe(el));
+
+// ===== COUNTER ANIMATION =====
+function animateCounter(el, target, suffix = '') {
+  let current = 0;
+  const step = target / 60;
+  const timer = setInterval(() => {
+    current += step;
+    if (current >= target) {
+      current = target;
+      clearInterval(timer);
+    }
+    el.textContent = Math.floor(current) + suffix;
+  }, 25);
+}
+
+// Stats counter (triggers when visible)
+const statsObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const stats = entry.target.querySelectorAll('.stat-num');
+      stats.forEach(stat => {
+        const text = stat.textContent;
+        if (text.includes('2000')) animateCounter(stat, 2000, '+');
+        else if (text === '4') animateCounter(stat, 4, '');
+        else if (text.includes('95')) animateCounter(stat, 95, '%');
+      });
+      statsObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.5 });
+
+const heroStats = document.querySelector('.hero-stats');
+if (heroStats) statsObserver.observe(heroStats);
+
+// About stats counter
+const aboutStatsObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const nums = entry.target.querySelectorAll('.ach-num');
+      nums.forEach(num => {
+        const text = num.textContent;
+        if (text.includes('2000')) animateCounter(num, 2000, '+');
+        else if (text.includes('10')) animateCounter(num, 10, '+');
+        else if (text.includes('95')) animateCounter(num, 95, '%');
+        else if (text.includes('50')) animateCounter(num, 50, '+');
+      });
+      aboutStatsObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.5 });
+
+const aboutStats = document.querySelector('.about-stats-card');
+if (aboutStats) aboutStatsObserver.observe(aboutStats);
+
+// ===== SMOOTH SCROLL =====
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+  anchor.addEventListener('click', function (e) {
+    const href = this.getAttribute('href');
+    if (href === '#') return;
+    const target = document.querySelector(href);
+    if (target) {
+      e.preventDefault();
+      const offset = 80;
+      const top = target.getBoundingClientRect().top + window.pageYOffset - offset;
+      window.scrollTo({ top, behavior: 'smooth' });
+    }
+  });
+});
+
+// ===== ACTIVE NAV LINK HIGHLIGHT =====
+const sections = document.querySelectorAll('section[id]');
+const navLinksAll = document.querySelectorAll('.nav-link');
+
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(section => {
+    const sectionTop = section.offsetTop - 100;
+    if (window.pageYOffset >= sectionTop) {
+      current = section.getAttribute('id');
+    }
+  });
+
+  navLinksAll.forEach(link => {
+    link.style.color = '';
+    const href = link.getAttribute('href');
+    if (href && href.includes(current)) {
+      link.style.color = 'var(--blue-primary)';
+    }
+  });
+});
+
+// ===== BROCHURE DOWNLOAD SIMULATION =====
+
+
+// ===== TYPING ANIMATION FOR HERO =====
+const heroTitle = document.querySelector('.hero-title');
+const phrases = ['Java', 'Python', 'DBMS', 'Networking'];
+let phraseIndex = 0;
+
+// ===== PARALLAX SHAPES =====
+window.addEventListener('scroll', () => {
+  const scrollY = window.scrollY;
+  const shapes = document.querySelectorAll('.shape');
+  shapes.forEach((shape, i) => {
+    const speed = (i + 1) * 0.05;
+    shape.style.transform = `translateY(${scrollY * speed}px)`;
+  });
+});
+
+// ===== COURSE CARD HOVER GLOW =====
+document.querySelectorAll('.course-card').forEach(card => {
+  card.addEventListener('mousemove', (e) => {
+    const rect = card.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    card.style.background = `radial-gradient(circle at ${x}% ${y}%, rgba(26,115,232,0.04) 0%, white 60%)`;
+  });
+  card.addEventListener('mouseleave', () => {
+    card.style.background = '';
+  });
+});
+
+// ===== SEARCH BUTTON =====
+document.getElementById('nav-search').addEventListener('click', () => {
+  const query = prompt('Search courses (e.g. Java, Python, DBMS, Networking):');
+  if (query) {
+    const courseMap = {
+      java: '#java',
+      python: '#python',
+      dbms: '#dbms',
+      database: '#dbms',
+      networking: '#networking',
+      network: '#networking',
+    };
+    const key = query.toLowerCase().trim();
+    for (const [term, anchor] of Object.entries(courseMap)) {
+      if (key.includes(term)) {
+        document.querySelector(anchor)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+    }
+    alert('No exact match found. Browse our Courses section below!');
+    document.querySelector('#courses')?.scrollIntoView({ behavior: 'smooth' });
+  }
+});
+
+console.log('%c🎓 Ikon Computer Education & Training Institute', 'color:#1a73e8;font-size:16px;font-weight:bold;');
+console.log('%cBuilt with ❤️ | MSME Verified | ISO Certified', 'color:#FF6B35;font-size:12px;');
