@@ -154,10 +154,11 @@
     /* ── Right panel ── */
     .right-panel {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
       padding: 48px 40px;
       background: white;
+      overflow-y: auto;
     }
 
     .form-box {
@@ -563,8 +564,21 @@
         <p class="back-link">Already registered? <a href="#" onclick="switchTab('login');return false">Login here</a></p>
       </div>
 
+    <!-- Back to Homepage -->
+    <div style="text-align:center;margin:24px 0 0">
+      <a href="/" id="back-to-home-link"
+         style="display:inline-flex;align-items:center;gap:8px;padding:12px 28px;
+                background:linear-gradient(135deg,#1a73e8,#0d47a1);color:#fff;
+                border-radius:50px;font-weight:700;font-size:14px;
+                text-decoration:none;box-shadow:0 4px 16px rgba(26,115,232,.35);
+                transition:transform .2s,box-shadow .2s">
+        &#8679; Back to Homepage
+      </a>
     </div>
-  </div>
+
+    </div> <!-- /form-box -->
+  </div> <!-- /right-panel -->
+
 
 <script>
 // ── Tab switching ──────────────────────────────────────────────────

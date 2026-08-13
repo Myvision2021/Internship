@@ -689,6 +689,11 @@ if __name__ == "__main__":
     print("  Press Ctrl+C to stop.")
     print("")
 
+    # Auto-open the website in the default browser
+    import webbrowser
+    import threading
+    threading.Timer(1.0, lambda: webbrowser.open(f"http://localhost:{port}")).start()
+
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:

@@ -453,3 +453,163 @@ document.getElementById('nav-search').addEventListener('click', () => {
 
 console.log('%c🎓 Ikon Computer Education & Training Institute', 'color:#1a73e8;font-size:16px;font-weight:bold;');
 console.log('%cBuilt with ❤️ | MSME Verified | ISO Certified', 'color:#FF6B35;font-size:12px;');
+
+// ===== CHATBOT LOGIC =====
+const chatbotToggle = document.getElementById('chatbot-toggle');
+const chatbotWindow = document.getElementById('chatbot-window');
+const chatClose = document.getElementById('chat-close');
+const chatBody = document.getElementById('chat-body');
+const chatInput = document.getElementById('chat-input');
+
+if (chatbotToggle && chatbotWindow) {
+  chatbotToggle.addEventListener('click', () => {
+    chatbotWindow.classList.add('open');
+    chatInput.focus();
+  });
+
+  chatClose.addEventListener('click', () => {
+    chatbotWindow.classList.remove('open');
+  });
+}
+
+function handleChatEnter(event) {
+  if (event.key === 'Enter') {
+    sendChatMessage();
+  }
+}
+
+function sendQuickReply(text) {
+  chatInput.value = text;
+  sendChatMessage();
+}
+
+function sendChatMessage() {
+  const text = chatInput.value.trim();
+  if (!text) return;
+
+  // Add user message
+  appendMessage(text, 'user');
+  chatInput.value = '';
+
+  // Simulate typing delay
+  setTimeout(() => {
+    const responseData = getBotResponse(text.toLowerCase());
+    appendMessage(responseData.text, 'bot', responseData.allied);
+  }, 500);
+}
+
+function appendMessage(htmlContent, sender, alliedQuestions = []) {
+  const msgWrap = document.createElement('div');
+  msgWrap.style.display = 'flex';
+  msgWrap.style.flexDirection = 'column';
+  msgWrap.style.alignItems = sender === 'user' ? 'flex-end' : 'flex-start';
+  
+  const msgDiv = document.createElement('div');
+  msgDiv.className = `chat-msg ${sender}`;
+  msgDiv.innerHTML = htmlContent;
+  msgWrap.appendChild(msgDiv);
+
+  if (sender === 'bot' && alliedQuestions && alliedQuestions.length > 0) {
+    const chipsDiv = document.createElement('div');
+    chipsDiv.className = 'chat-chips';
+    chipsDiv.style.marginTop = '6px';
+    chipsDiv.style.marginLeft = '4px';
+    alliedQuestions.forEach(q => {
+      const chip = document.createElement('span');
+      chip.className = 'chat-chip';
+      chip.textContent = q;
+      chip.onclick = () => sendQuickReply(q);
+      chipsDiv.appendChild(chip);
+    });
+    msgWrap.appendChild(chipsDiv);
+  }
+
+  chatBody.appendChild(msgWrap);
+  chatBody.scrollTop = chatBody.scrollHeight;
+}
+
+function getBotResponse(input) {
+  // Check specific queries first (duration, fees, prospect, cert)
+  if (input.includes('duration') || input.includes('time') || input.includes('how long') || input.includes('month') || input.includes('days')) {
+    return {
+      text: 'The duration for each of our intensive internship courses is <strong>1 Month (30 Days)</strong>.',
+      allied: ['Course fees', 'Courses offered', 'Internship prospects']
+    };
+  }
+  if (input.includes('fee') || input.includes('cost') || input.includes('price') || input.includes('pay') || input.includes('1000')) {
+    return {
+      text: 'The fee for each course is incredibly affordable at just <strong>Rs. 1000/-</strong>.',
+      allied: ['Course duration', 'Certifications', 'How to register?']
+    };
+  }
+  if (input.includes('certif') || input.includes('msme') || input.includes('iso') || input.includes('govt')) {
+    return {
+      text: 'Our certification system is fully accredited. You will receive certificates that are:<ul><li>✅ MSME Verified</li><li>✅ ISO Certified</li><li>✅ Government-Recognized</li></ul>',
+      allied: ['Internship prospects', 'Courses offered', 'Course fees']
+    };
+  }
+  if (input.includes('prospect') || input.includes('placement') || input.includes('job') || input.includes('career') || input.includes('offer letter')) {
+    return {
+      text: 'The prospects are excellent! You will receive:<ul><li>📄 An Official Offer Letter</li><li>💼 Placement Support & Assistance</li><li>🚀 Hands-on Major Project experience</li></ul>',
+      allied: ['Certifications', 'Course fees', 'How to register?']
+    };
+  }
+  if (input.includes('register') || input.includes('apply') || input.includes('join') || input.includes('enroll')) {
+    return {
+      text: 'You can easily register by closing this chat and clicking the "Register Now" button at the top of the page!',
+      allied: ['Courses offered', 'Course fees']
+    };
+  }
+  
+  // Specific course subjects
+  if (input.includes('java')) {
+    return {
+      text: 'Our ☕ <strong>Java Programming</strong> internship covers Core Java, OOP Concepts, Arrays & Exception Handling, and Database Connectivity (JDBC). It is perfect for building robust backend applications.',
+      allied: ['Course duration', 'Python', 'DBMS', 'Course fees']
+    };
+  }
+  if (input.includes('python')) {
+    return {
+      text: 'Our 🐍 <strong>Python Development</strong> internship covers Python Basics, Control Structures, Data Structures (Lists, Dictionaries), and File Handling. It is great for automation and backend development!',
+      allied: ['Course duration', 'Java', 'Course fees']
+    };
+  }
+  if (input.includes('dbms') || input.includes('database') || input.includes('sql')) {
+    return {
+      text: 'Our 🗃️ <strong>DBMS</strong> internship teaches you Relational Models, SQL Basics, Database Normalization (1NF to BCNF), and Transaction Management. You will master how to structure and query databases efficiently.',
+      allied: ['Course duration', 'Java', 'Python']
+    };
+  }
+  if (input.includes('network')) {
+    return {
+      text: 'Our 🌐 <strong>Computer Networking</strong> internship dives deep into the OSI Model, TCP/IP Protocol Suite, IP Addressing & Subnetting, and Network Security Fundamentals.',
+      allied: ['Course duration', 'Course fees', 'Certifications']
+    };
+  }
+  
+  // General course query
+  if (input.includes('course') || input.includes('internship')) {
+    return {
+      text: 'We offer 4 intensive internship courses:<ul><li>☕ Java Programming</li><li>🐍 Python Development</li><li>🗃️ DBMS</li><li>🌐 Computer Networking</li></ul>',
+      allied: ['Tell me about Java', 'Tell me about Python', 'DBMS details', 'Course duration']
+    };
+  }
+  
+  if (input.includes('hi') || input.includes('hello') || input.includes('hey')) {
+    return {
+      text: 'Hello there! 👋 How can I assist you with our internship programs today?',
+      allied: ['Courses offered', 'Course fees', 'Certifications']
+    };
+  }
+  if (input.includes('thank')) {
+    return {
+      text: 'You\'re very welcome! Let me know if you have any other questions.',
+      allied: []
+    };
+  }
+  
+  return {
+    text: 'I\'m not entirely sure about that. Could you ask about our <strong>courses</strong>, <strong>duration</strong>, <strong>fees</strong>, <strong>certifications</strong>, or <strong>prospects</strong>?',
+    allied: ['Courses offered', 'Course fees', 'Internship prospects']
+  };
+}
