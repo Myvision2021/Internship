@@ -3048,3 +3048,73 @@ body {
   100% { box-shadow: 0 0 0 0 rgba(255, 107, 53, 0); }
 }
 
+
+/* ===== DEEP MOBILE OPTIMIZATIONS (Max-Width: 480px) ===== */
+@media (max-width: 480px) {
+  /* Fix Bank Panel Sizes & Text Overflows */
+  .bd-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 12px 16px;
+  }
+  .bd-val {
+    font-size: 13px;
+    word-break: break-all;
+  }
+  .bank-card-header {
+    padding: 16px;
+  }
+  .qr-card, .bank-card {
+    border-radius: 16px;
+  }
+  .pay-grid {
+    gap: 20px;
+  }
+
+  /* Chatbot Panel Sizing */
+  .chatbot-window {
+    width: calc(100% - 30px) !important;
+    height: 440px !important;
+    right: 15px !important;
+    bottom: 75px !important;
+  }
+  .chatbot-messages {
+    padding: 12px !important;
+  }
+
+  /* Registration Panel Adjustments */
+  .register-form-wrap {
+    padding: 24px 16px;
+    border-radius: 16px;
+  }
+  .input-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px;
+  }
+
+  /* Study Materials & Grid Fixes */
+  .binfo-courses, .binfo-highlights {
+    gap: 12px;
+  }
+  .sm-card {
+    min-width: 100%;
+    padding: 20px;
+  }
+
+  /* Hero Adjustments */
+  .hero-title {
+    font-size: 28px;
+  }
+  .hero-subtitle {
+    font-size: 16px;
+  }
+  
+  /* Music toggle size */
+  .music-toggle {
+    width: 40px;
+    height: 40px;
+    bottom: 15px;
+    left: 15px;
+  }
+}
