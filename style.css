@@ -1746,7 +1746,8 @@ body {
     visibility: visible;
     transform: none;
     margin-top: 4px;
-    display: none;
+    display: flex;
+    flex-direction: column;
   }
 
   .hamburger { display: flex; }

@@ -117,8 +117,13 @@ hamburger.addEventListener('click', () => {
 });
 
 // Close nav on link click (mobile)
-navLinks.querySelectorAll('a').forEach(link => {
-  link.addEventListener('click', () => {
+document.querySelectorAll('.nav-links a').forEach(link => {
+  link.addEventListener('click', (e) => {
+    // Don't close the menu if clicking a dropdown parent (like "Courses")
+    if (link.nextElementSibling && link.nextElementSibling.classList.contains('dropdown-menu')) {
+      return;
+    }
+    
     navLinks.classList.remove('open');
     hamburger.querySelectorAll('span').forEach(s => {
       s.style.transform = '';
