@@ -142,12 +142,11 @@ function toggleFaq(btn) {
 }
 
 // ===== REGISTRATION ENDPOINT =====
-// Points to the local Python server's /register route.
-// Data is saved to registrations.json + registrations.csv
-// View all entries at: http://localhost:3000/admin  (password: ikon2026)
-const GOOGLE_SCRIPT_URL = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
+// Since GitHub Pages is static, we will mock the backend using localStorage.
+// This allows the website to function perfectly as a demo without throwing server errors.
+const GOOGLE_SCRIPT_URL = 'LOCAL_STORAGE';
 
-// ===== FORM SUBMISSION → GOOGLE DRIVE / SHEETS =====
+// ===== FORM SUBMISSION → LOCAL STORAGE =====
 async function handleSubmit(event) {
   event.preventDefault();
 
@@ -157,6 +156,7 @@ async function handleSubmit(event) {
 
   // Collect form values
   const payload = {
+    id: 'REG-' + Math.floor(Math.random() * 90000 + 10000),
     timestamp:  new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
     name:       document.getElementById('input-name').value.trim(),
     email:      document.getElementById('input-email').value.trim(),
@@ -166,43 +166,20 @@ async function handleSubmit(event) {
     message:    document.getElementById('input-message').value.trim(),
   };
 
-  // ── If URL not yet configured, show setup instructions ──
-  if (GOOGLE_SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
-    console.warn('⚠️  Google Apps Script URL not set. See google_apps_script.js for setup.');
-    simulateSuccess(btn, payload);
-    return;
-  }
-
-  try {
-    // POST registration to the Python server
-    const res = await fetch(GOOGLE_SCRIPT_URL, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(payload),
-    });
-
-    // Safely parse JSON — server might return HTML on unexpected errors
-    let result;
+  // Simulate network delay
+  setTimeout(() => {
     try {
-      result = await res.json();
-    } catch (_) {
-      result = { status: 'error', message: 'Unexpected server response (HTTP ' + res.status + ').' };
-    }
-
-    if (result.status === 'success') {
+      // Save to localStorage
+      const registrations = JSON.parse(localStorage.getItem('ikon_registrations') || '[]');
+      registrations.push(payload);
+      localStorage.setItem('ikon_registrations', JSON.stringify(registrations));
+      
       showSuccess(btn, payload);
-    } else {
-      showFormError(btn, result.message || 'Registration failed. Please try again.');
+    } catch (err) {
+      console.error('Registration error:', err);
+      showFormError(btn, 'Could not save registration. Please try again.');
     }
-  } catch (err) {
-    // Network error (server not running, no internet, etc.)
-    console.error('Registration fetch error:', err);
-    showFormError(btn,
-      err.message && err.message.includes('fetch')
-        ? 'Server is not reachable. Make sure the server is running (python server.py) and try again.'
-        : err.message || 'Could not connect. Please try again.'
-    );
-  }
+  }, 1000);
 }
 
 // After successful registration → redirect to login page with email pre-filled

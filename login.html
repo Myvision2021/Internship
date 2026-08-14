@@ -618,31 +618,34 @@ async function doLogin(e) {
   btn.textContent = 'Checking...';
   btn.disabled = true;
 
-  try {
-    var res = await fetch('/login-check', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email, phone_last4: phone })
-    });
+  setTimeout(function() {
+    try {
+      var registrations = JSON.parse(localStorage.getItem('ikon_registrations') || '[]');
+      var user = registrations.find(function(r) {
+        return r.email.toLowerCase() === email.toLowerCase() && r.phone.endsWith(phone);
+      });
 
-    var data = await res.json();
-
-    if (data.status === 'found') {
-      showRegistrationCard(data.record);
-      document.getElementById('login-form').style.display = 'none';
-      document.querySelectorAll('.back-link').forEach(el => el.style.display = 'none');
-    } else if (data.status === 'wrong_pin') {
-      showAlert('login-alert-error', 'Incorrect PIN. Please enter the last 4 digits of your registered phone number.');
-    } else {
-      showAlert('login-alert-error', 'No registration found for this email. Please check and try again, or register below.');
+      if (user) {
+        showRegistrationCard(user);
+        document.getElementById('login-form').style.display = 'none';
+        document.querySelectorAll('.back-link').forEach(el => el.style.display = 'none');
+      } else {
+        // Also check if they just used the wrong pin vs completely not found
+        var emailMatch = registrations.find(function(r) { return r.email.toLowerCase() === email.toLowerCase(); });
+        if (emailMatch) {
+          showAlert('login-alert-error', 'Incorrect PIN. Please enter the last 4 digits of your registered phone number.');
+        } else {
+          showAlert('login-alert-error', 'No registration found for this email. Please check and try again, or register below.');
+        }
+      }
+    } catch (err) {
+      showAlert('login-alert-error', 'Could not access local storage database.');
+      console.error(err);
+    } finally {
+      btn.textContent = 'Login to Portal';
+      btn.disabled = false;
     }
-  } catch (err) {
-    showAlert('login-alert-error', 'Could not connect to the server. Make sure the server is running and try again.');
-    console.error(err);
-  } finally {
-    btn.textContent = 'Login to Portal';
-    btn.disabled = false;
-  }
+  }, 800);
 }
 
 function showRegistrationCard(r) {
@@ -684,29 +687,36 @@ async function doQuickRegister(e) {
   btn.textContent = 'Submitting...';
   btn.disabled = true;
 
-  try {
-    var res = await fetch('/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, phone, course, mode, message: '' })
-    });
-    var data = await res.json();
-    if (data.status === 'success') {
+  setTimeout(function() {
+    try {
+      var newReg = {
+        id: 'REG-' + Math.floor(Math.random() * 90000 + 10000),
+        timestamp: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+        name: name,
+        email: email,
+        phone: phone,
+        course: course,
+        mode: mode,
+        message: ''
+      };
+
+      var registrations = JSON.parse(localStorage.getItem('ikon_registrations') || '[]');
+      registrations.push(newReg);
+      localStorage.setItem('ikon_registrations', JSON.stringify(registrations));
+
       document.getElementById('quick-register-form').reset();
       showAlert('new-alert-success',
-        'Registration successful! Your application #' + data.id + ' has been received. ' +
+        'Registration successful! Your application #' + newReg.id + ' has been received. ' +
         'You can now login using your email and the last 4 digits of your phone number.');
       setTimeout(function() { switchTab('login'); }, 3000);
-    } else {
-      showAlert('new-alert-error', data.message || 'Registration failed. Please try again.');
+    } catch (err) {
+      showAlert('new-alert-error', 'Could not connect. Please try again.');
+      console.error(err);
+    } finally {
+      btn.textContent = 'Submit Application';
+      btn.disabled = false;
     }
-  } catch (err) {
-    showAlert('new-alert-error', 'Server not reachable. Please try again or use the registration form on the homepage.');
-    console.error(err);
-  } finally {
-    btn.textContent = 'Submit Application';
-    btn.disabled = false;
-  }
+  }, 1000);
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────
