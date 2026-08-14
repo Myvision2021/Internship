@@ -145,7 +145,7 @@ function toggleFaq(btn) {
 // Points to the local Python server's /register route.
 // Data is saved to registrations.json + registrations.csv
 // View all entries at: http://localhost:3000/admin  (password: ikon2026)
-const GOOGLE_SCRIPT_URL = '/register';
+const GOOGLE_SCRIPT_URL = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
 
 // ===== FORM SUBMISSION → GOOGLE DRIVE / SHEETS =====
 async function handleSubmit(event) {
@@ -212,7 +212,7 @@ function showSuccess(btn, payload) {
   document.getElementById('register-form').reset();
 
   // Build login URL with pre-filled email & name so the student can log in immediately
-  const loginUrl = '/login.html'
+  const loginUrl = 'login.html'
     + '?email=' + encodeURIComponent(payload.email)
     + '&name='  + encodeURIComponent(payload.name);
 
@@ -612,4 +612,23 @@ function getBotResponse(input) {
     text: 'I\'m not entirely sure about that. Could you ask about our <strong>courses</strong>, <strong>duration</strong>, <strong>fees</strong>, <strong>certifications</strong>, or <strong>prospects</strong>?',
     allied: ['Courses offered', 'Course fees', 'Internship prospects']
   };
+}
+
+// ===== BACKGROUND MUSIC LOGIC =====
+const bgMusic = document.getElementById('bg-music');
+const musicToggle = document.getElementById('music-toggle');
+
+if (bgMusic && musicToggle) {
+  // Lower the volume slightly since it's background music
+  bgMusic.volume = 0.4;
+
+  musicToggle.addEventListener('click', () => {
+    if (bgMusic.paused) {
+      bgMusic.play();
+      musicToggle.classList.add('playing');
+    } else {
+      bgMusic.pause();
+      musicToggle.classList.remove('playing');
+    }
+  });
 }
